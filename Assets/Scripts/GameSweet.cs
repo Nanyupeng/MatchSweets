@@ -77,7 +77,7 @@ public class GameSweet : MonoBehaviour
     {
         get
         {
-            if (colorComponet==null)
+            if (colorComponet == null)
             {
                 colorComponet = GetComponent<ColorSweet>();
                 return colorComponet;
@@ -117,4 +117,20 @@ public class GameSweet : MonoBehaviour
         GameManager = _manager;
         sweetsType = _type;
     }
+
+    void OnMouseEnter()
+    {
+        GameManager.EnterSweet(this);
+    }
+
+    void OnMouseDown()
+    {
+        GameManager.PressSweet(this);
+    }
+
+    void OnMouseUp()
+    {
+        GameManager.UpSweet();
+    }
+
 }

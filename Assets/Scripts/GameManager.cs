@@ -52,7 +52,14 @@ public class GameManager : MonoBehaviour
     public int xColumn;
     public int yRow;
 
+    public float moveSpeed;
+
     public GameObject gridPrefab;
+
+    //需要交换的两个对象
+    private GameSweet pressedSweet;
+    private GameSweet enteredSweet;
+
     void Start()
     {
         sweetsPrefabDic = new Dictionary<SweetsType, GameObject>();
@@ -61,6 +68,10 @@ public class GameManager : MonoBehaviour
         InstantiateGrid();
         SweetsLiveDic();
         InstantiateSweet();
+
+        Destroy(sweets[4, 4]);
+        InstantiateGameSweet(4, 4, SweetsType.BARRIER);
+        StartCoroutine(AllFill());
     }
 
     /// <summary>
@@ -106,12 +117,12 @@ public class GameManager : MonoBehaviour
     /// </summary>
     void InstantiateSweet()
     {
-        for (int x = 0; x < xColumn; x++)
+        for (int y = 0; y < yRow; y++)
         {
-            for (int y = 0; y < yRow; y++)
+            for (int x = 0; x < xColumn; x++)
             {
                 InstantiateGameSweet(x, y, SweetsType.EMPTY);
-             }
+            }
         }
     }
 
@@ -132,4 +143,132 @@ public class GameManager : MonoBehaviour
         return sweets[x, y];
     }
 
+
+    IEnumerator AllFill()
+    {
+        while (OnFill())
+        {
+            yield return new WaitForSeconds(moveSpeed);
+        }
+    }
+
+    bool OnFill()
+    {
+        bool fillNotFinished = false;
+        for (int y = yRow - 2; y >= 0; y--)
+        {
+            for (int x = 0; x < xColumn; x++)
+            {
+                GameSweet gameSweet = sweets[x, y];
+                if (gameSweet.CanMove())
+                {
+                    GameSweet sweetBelow = sweets[x, y + 1];
+                    if (sweetBelow.SweetsType == SweetsType.EMPTY)//垂直填充
+                    {
+                        Destroy(sweetBelow.gameObject);
+                        gameSweet.MoveSweet.Move(x, y + 1, moveSpeed);
+                        sweets[x, y + 1] = gameSweet;
+                        InstantiateGameSweet(x, y, SweetsType.EMPTY);
+                        fillNotFinished = true;
+                    }
+                    else   //斜向填充
+                    {
+                        for (int down = -1; down <= 1; down++)
+                        {
+                            if (down != 0)
+                            {
+                                int downX = x + down;
+                                if (downX >= 0 && downX < xColumn)
+                                {
+                                    GameSweet downSweet = sweets[downX, y + 1];
+                                    if (downSweet.SweetsType == SweetsType.EMPTY)
+                                    {
+                                        bool canfill = true;
+                                        for (int aboveY = y; aboveY >= 0; aboveY--)
+                                        {
+                                            GameSweet sweetAbove = sweets[downX, aboveY];
+                                            if (sweetAbove.CanMove())
+                                            {
+                                                break;
+                                            }
+                                            else if (!sweetAbove.CanMove() && sweetAbove.SweetsType != SweetsType.EMPTY)
+                                            {
+                                                canfill = false;
+                                                break;
+                                            }
+                                        }
+
+                                        if (!canfill)
+                                        {
+                                            Destroy(downSweet.gameObject);
+                                            gameSweet.MoveSweet.Move(downX, y + 1, moveSpeed); ;
+                                            sweets[downX, y + 1] = gameSweet;
+                                            InstantiateGameSweet(x, y, SweetsType.EMPTY); ;
+                                            fillNotFinished = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < xColumn; x++)
+        {
+            GameSweet sweet = sweets[x, 0];
+            if (sweet.SweetsType == SweetsType.EMPTY)
+            {
+                GameObject newSweet = Instantiate(sweetsPrefabDic[SweetsType.NORMAL], CorrectPosition(x + 1, 0), Quaternion.identity);
+                newSweet.transform.SetParent(transform);
+
+                sweets[x, 0] = newSweet.GetComponent<GameSweet>();
+                sweets[x, 0].Init(x, 0, this, SweetsType.NORMAL);
+                sweets[x, 0].MoveSweet.Move(x, 0, moveSpeed);
+                sweets[x, 0].ColorComponet.SetColor((ColorType)Random.Range(0, sweets[x, 0].ColorComponet.colorNum));
+                fillNotFinished = true;
+            }
+        }
+        return fillNotFinished;
+    }
+
+
+    private bool IsFriend(GameSweet sweet1, GameSweet sweet2)
+    {
+        return (sweet1.X == sweet2.X && Mathf.Abs(sweet1.Y - sweet2.Y) == 1) || (sweet1.Y == sweet2.Y && Mathf.Abs(sweet1.X - sweet2.X) == 1);
+    }
+
+    private void ExchangeSweets(GameSweet sweet1, GameSweet sweet2)
+    {
+        if (sweet1.CanMove() && sweet2.CanMove())
+        {
+            sweets[sweet1.X, sweet1.Y] = sweet2;
+            sweets[sweet2.X, sweet2.Y] = sweet1;
+
+            int tempx = sweet1.X;
+            int tempy = sweet1.Y;
+
+            sweet1.MoveSweet.Move(sweet2.X, sweet2.Y, moveSpeed);
+            sweet2.MoveSweet.Move(tempx, tempy, moveSpeed);
+
+        }
+    }
+
+    public void PressSweet(GameSweet sweet)
+    {
+        pressedSweet = sweet;
+    }
+
+    public void EnterSweet(GameSweet sweet)
+    {
+        enteredSweet = sweet;
+    }
+
+    public void UpSweet()
+    {
+        if (IsFriend(pressedSweet, enteredSweet))
+            ExchangeSweets(pressedSweet, enteredSweet);
+    }
 }
