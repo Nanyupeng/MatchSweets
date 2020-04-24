@@ -86,6 +86,22 @@ public class GameSweet : MonoBehaviour
         }
     }
 
+    private ClearedSweet clearedSweet;
+    public ClearedSweet ClearedSweet
+    {
+        get
+        {
+            if (clearedSweet == null)
+            {
+                clearedSweet = GetComponent<ClearedSweet>();
+                return clearedSweet;
+            }
+            return clearedSweet;
+        }
+
+
+    }
+
     /// <summary>
     /// 是否可以移动
     /// </summary>
@@ -102,6 +118,15 @@ public class GameSweet : MonoBehaviour
     public bool CanColor()
     {
         return ColorComponet != null;
+    }
+
+    /// <summary>
+    /// 是否可以清除
+    /// </summary>
+    /// <returns></returns>
+    public bool CanClear()
+    {
+        return ClearedSweet != null;
     }
 
     /// <summary>
