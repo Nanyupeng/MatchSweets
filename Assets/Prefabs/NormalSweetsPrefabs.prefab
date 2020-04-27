@@ -156,6 +156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clearAnim: {fileID: 7400000, guid: c541679289d7a9847b3605326f3b82d0, type: 2}
+  audioClip: {fileID: 8300000, guid: 9cb19eb032d304b07acec596ae2ce4a4, type: 3}
 --- !u!114 &114776438776482940
 MonoBehaviour:
   m_ObjectHideFlags: 1

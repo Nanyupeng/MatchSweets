@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using Random = UnityEngine.Random;
+using UnityEngine.UI;
 /// <summary>
 /// 甜品类型
 /// </summary>
@@ -23,14 +24,17 @@ public class GameManager : MonoBehaviour
     /// 单例
     /// </summary>
     private static GameManager _gameManager;
-    public GameManager gameManager()
+    public static GameManager gameManager
     {
-        if (_gameManager == null)
+        get
         {
-            _gameManager = GetComponent<GameManager>();
+            if (_gameManager == null)
+            {
+                _gameManager = FindObjectOfType<GameManager>();
+                return _gameManager;
+            }
             return _gameManager;
         }
-        return _gameManager;
     }
 
     /// <summary>
@@ -60,6 +64,15 @@ public class GameManager : MonoBehaviour
     private GameSweet pressedSweet;
     private GameSweet enteredSweet;
 
+    //有关游戏UI显示的控件内容
+    public Text timeText;
+    public float gameTime = 60;
+    private bool gameOver;
+
+    public int playerScore;
+    public Text scoreText;
+    private float addScoretTime;
+    private float currScore;
     void Start()
     {
         sweetsPrefabDic = new Dictionary<SweetsType, GameObject>();
@@ -72,6 +85,34 @@ public class GameManager : MonoBehaviour
         Destroy(sweets[4, 4]);
         InstantiateGameSweet(4, 4, SweetsType.BARRIER);
         StartCoroutine(AllFill());
+    }
+
+    void Update()
+    {
+        if (!gameOver)
+        {
+            if (gameTime > 0)
+            {
+                gameTime -= Time.deltaTime;
+                timeText.text = gameTime.ToString("0");
+                if (addScoretTime < 0.08f)
+                {
+                    addScoretTime += Time.deltaTime;
+                }
+                else if (currScore < playerScore)
+                {
+                    currScore++;
+                    scoreText.text = currScore.ToString();
+                    addScoretTime = 0;
+                }
+
+                if (gameTime <= 0)
+                {
+                    gameOver = true;
+                    gameTime = 60;
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -271,23 +312,34 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 玩家对甜品物体进行点击 进入 松开的操作
+    /// </summary>
+    /// <param name="sweet"></param>
+    #region
     public void PressSweet(GameSweet sweet)
     {
-        pressedSweet = sweet;
+        if (!gameOver)
+            pressedSweet = sweet;
     }
 
     public void EnterSweet(GameSweet sweet)
     {
-        enteredSweet = sweet;
+        if (!gameOver)
+            enteredSweet = sweet;
     }
 
     public void UpSweet()
     {
-        if (IsFriend(pressedSweet, enteredSweet))
-            ExchangeSweets(pressedSweet, enteredSweet);
+        if (!gameOver)
+            if (IsFriend(pressedSweet, enteredSweet))
+                ExchangeSweets(pressedSweet, enteredSweet);
     }
+    #endregion
 
 
+    ///匹配清除的方法
+    #region 
     /// <summary>
     /// 行遍历思路
     /// 如果匹配到的甜品有3个或以上，那么我们就应该加入 行匹配 列表。
@@ -546,4 +598,5 @@ public class GameManager : MonoBehaviour
         }
         return needRefill;
     }
+    #endregion
 }

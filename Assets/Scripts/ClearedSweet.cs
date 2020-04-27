@@ -18,6 +18,7 @@ public class ClearedSweet : MonoBehaviour
 
     protected GameSweet sweet;
 
+    public AudioClip audioClip;
     public virtual void Clear()
     {
         isClearing = true;
@@ -30,6 +31,8 @@ public class ClearedSweet : MonoBehaviour
         if (anim != null)
         {
             anim.Play(clearAnim.name);
+            GameManager.gameManager.playerScore++;
+            AudioSource.PlayClipAtPoint(audioClip, transform.position);
             yield return new WaitForSeconds(clearAnim.length);
             Destroy(gameObject);
         }
